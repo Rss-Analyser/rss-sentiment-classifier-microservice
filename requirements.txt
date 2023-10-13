@@ -1,1 +1,6 @@
-
+flask
+bs4
+requests
+PyPDF2
+PyYAML
+lxml

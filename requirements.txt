@@ -4,3 +4,5 @@ requests
 PyPDF2
 PyYAML
 lxml
+transformers
+yaml

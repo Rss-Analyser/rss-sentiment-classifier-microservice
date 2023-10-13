@@ -6,3 +6,4 @@ PyYAML
 lxml
 transformers
 torch
+torchvision

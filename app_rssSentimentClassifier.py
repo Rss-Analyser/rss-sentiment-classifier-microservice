@@ -72,4 +72,4 @@ def get_status():
     }), 200
 
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0', port=5003)  # Port changed to avoid conflict if running alongside the other service
+    app.run(debug=True, host='0.0.0.0', port=5014)  # Port changed to avoid conflict if running alongside the other service

@@ -11,7 +11,7 @@ COPY . .
 RUN pip install --no-cache-dir -r requirements.txt
 
 # Expose the port the app runs on
-EXPOSE 5003
+EXPOSE 5014
 
 # Set the command to run when starting the container
 CMD ["python", "./app_rssSentimentClassifier.py"]

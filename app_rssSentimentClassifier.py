@@ -71,5 +71,6 @@ def get_status():
         "current_runtime": current_runtime
     }), 200
 
+
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0', port=5014)  # Port changed to avoid conflict if running alongside the other service

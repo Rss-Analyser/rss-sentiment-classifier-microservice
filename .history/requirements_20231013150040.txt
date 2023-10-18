@@ -7,4 +7,3 @@ lxml
 transformers
 torch
 torchvision
-psycopg2-binary

@@ -1,6 +1,7 @@
 import sqlite3
 from transformers import pipeline
 import yaml
+import psycopg2
 
 CONFIG_PATH = "./config_rssSentimentClassifier.yaml"
 
@@ -12,36 +13,43 @@ MODEL = config['semantic_model']
 
 sentiment_analysis = pipeline("sentiment-analysis", model=MODEL)
 
-def classify_sentiments_in_db(db_path, classes_list=None, increment_func=None):
-    conn = sqlite3.connect(db_path)
+def classify_sentiments_in_db(cockroachdb_conn_str, classes_list=None, increment_func=None):
+    conn = psycopg2.connect(cockroachdb_conn_str)
     cursor = conn.cursor()
     
-    cursor.execute("SELECT name FROM sqlite_master WHERE type='table' AND name LIKE 'rss_entries_%';")
+    # Fetching table names
+    cursor.execute("""
+    SELECT table_name 
+    FROM information_schema.tables 
+    WHERE table_schema = 'public' AND table_name LIKE 'rss_entries_%';
+    """)
     tables = [table[0] for table in cursor.fetchall()]
     
     for table in tables:
-        cursor.execute(f"PRAGMA table_info({table});")
-        columns = [column[1] for column in cursor.fetchall()]
+        # Fetch columns for the current table
+        cursor.execute(f"SELECT column_name FROM information_schema.columns WHERE table_name = %s;", (table,))
+        columns = [column[0] for column in cursor.fetchall()]
         
         # Check and add 'Sentiment' column if it doesn't exist
-        if 'Sentiment' not in columns:
-            cursor.execute(f"ALTER TABLE {table} ADD COLUMN Sentiment TEXT;")
-        
+        if 'sentiment' not in columns:
+            cursor.execute(f"ALTER TABLE {table} ADD COLUMN sentiment TEXT;")
+            conn.commit()
         if classes_list:
-            cursor.execute(f"SELECT rowid, Title FROM {table} WHERE (Class IN ({', '.join(['?' for _ in classes_list])})) AND (Sentiment IS NULL OR Sentiment = '');", classes_list)
+            placeholders = ', '.join(['%s' for _ in classes_list])
+            cursor.execute(f"SELECT rowid, Title FROM {table} WHERE (class IN ({placeholders})) AND (sentiment IS NULL OR sentiment = '');", classes_list)
         else:
-            cursor.execute(f"SELECT rowid, Title FROM {table} WHERE Sentiment IS NULL OR Sentiment = '';")
+            cursor.execute(f"SELECT rowid, Title FROM {table} WHERE sentiment IS NULL OR sentiment = '';")
         
         titles = cursor.fetchall()
 
-        for rowid, title in titles:
+        for row_id, title in titles:
             try:
                 sentiment = analyze_sentiment(title)
             except Exception as e:
                 print(f"Error during classification of title '{title}': {e}")
                 sentiment = 'Unknown'
             
-            cursor.execute(f"UPDATE {table} SET Sentiment = ? WHERE rowid = ?", (sentiment, rowid))
+            cursor.execute(f"UPDATE {table} SET sentiment = %s WHERE rowid = %s", (sentiment, row_id))
 
             if increment_func:
                 increment_func()

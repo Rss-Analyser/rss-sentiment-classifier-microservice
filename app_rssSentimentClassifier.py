@@ -9,8 +9,10 @@ import threading
 import yaml
 import json
 import time
+import psycopg2
 
 app = Flask(__name__)
+
 
 CONFIG_PATH = "./config_rssSentimentClassifier.yaml"
 
@@ -18,7 +20,15 @@ CONFIG_PATH = "./config_rssSentimentClassifier.yaml"
 with open(CONFIG_PATH, 'r') as file:
     config = yaml.safe_load(file)
 
-DATABASE_PATH = config['database']['sqlite_path']
+cockroachdb_conn_str = "dbname=" + config['database'].get('dbname', '')
+if 'user' in config['database'] and config['database']['user']:
+    cockroachdb_conn_str += " user=" + config['database']['user']
+if 'password' in config['database'] and config['database']['password']:
+    cockroachdb_conn_str += " password=" + config['database']['password']
+cockroachdb_conn_str += " host=" + config['database'].get('host', '')
+cockroachdb_conn_str += " port=" + config['database'].get('port', '')
+
+DATABASE_PATH = cockroachdb_conn_str
 
 # Status variables
 status = "idle"

@@ -2,7 +2,7 @@ import requests
 import time
 import json
 
-BASE_URL = "http://127.0.0.1:5003"  # Note the port is changed to 5001 for sentiment classifier
+BASE_URL = "http://localhost:5014"  # Note the port is changed to 5001 for sentiment classifier
 
 # Define your custom classes here, if you want to filter by specific classes for sentiment analysis
 # CLASSES = ["News", "Entertainment", "Sports", "Economy", "Technology", "Finance", "Politics"]  # Replace with your desired classes
